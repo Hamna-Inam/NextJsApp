@@ -16,18 +16,20 @@ interface LoanResult {
     error?: string;
 }
 
-function calculateLoan(loanAmount: number, interestRate: number, loanTerm: number, fixed: boolean): number {
-    const monthlyRate = interestRate / 100 / 12;  // Convert annual rate to monthly
-    const numberOfPayments = loanTerm * 12;  
-    
+function calculateLoan(loanAmount: number, interestRate: number, loanTerm: number, fixed: boolean, yearlyIncreaseRate:number): number {
+    const numberOfPayments = loanTerm * 12;
+
     if (fixed) {
-      // Fixed interest calculation
-      return (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) /
-        (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
+        const monthlyRate = interestRate / 100 / 12;
+        return (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) /
+               (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
     } else {
-      const adjustedRate = monthlyRate + 0.01; 
-      return (loanAmount * adjustedRate * Math.pow(1 + adjustedRate, numberOfPayments)) /
-        (Math.pow(1 + adjustedRate, numberOfPayments) - 1);
+        const increase = yearlyIncreaseRate ;
+        const adjustedAnnualRate = interestRate + increase;
+        const adjustedMonthlyRate = adjustedAnnualRate / 100 / 12;
+        
+        return (loanAmount * adjustedMonthlyRate * Math.pow(1 + adjustedMonthlyRate, numberOfPayments)) /
+               (Math.pow(1 + adjustedMonthlyRate, numberOfPayments) - 1);
     }
   }
 
@@ -37,24 +39,29 @@ async function addLoan(formData: FormData): Promise<LoanResult> {
     const loanAmountVal = formData.get('loanAmount');
     const interestRateVal = formData.get('interestRate');
     const fixedVal = formData.get('fixed');
-    const loanTermVal = formData.get('loanTerm');  
+    const loanTermVal = formData.get('loanTerm'); 
+    const yearlyIncVal = formData.get('yearlyIncreaseRate') 
 
 
-    if (!carIdVal|| !loanAmountVal || !interestRateVal || !fixedVal ||!loanTermVal ){
+    if (!carIdVal|| !loanAmountVal || !interestRateVal ||!loanTermVal ){
         return {error: 'One or more input fields is missing'};
     }
+
+    if (!fixedVal && !yearlyIncVal) {
+        return {error: 'Yearly increase rate is missing'};
+    }
+
+
     const carId = parseInt(carIdVal.toString());
     if (isNaN(carId) || carId <= 0) {
         return { error: 'Car ID must be a positive number' };
     }
 
-    // Validate amount
     const loanAmount = parseFloat(loanAmountVal.toString());
     if (isNaN(loanAmount) || loanAmount <= 0) {
         return { error: 'Loan amount must be a positive number' };
     }
 
-    // Validate interest rate
     const interestRate = parseFloat(interestRateVal.toString());
     if (isNaN(interestRate) || interestRate < 0) {
         return { error: 'Interest rate must be a non-negative number' };
@@ -65,7 +72,18 @@ async function addLoan(formData: FormData): Promise<LoanResult> {
         return { error: 'Interest rate must be a non-negative number' };
     }
 
+    
     const fixed = fixedVal === 'on'; // Determines if the checkbox was checked
+
+    let yearlyIncreaseRate = 1;
+    if(!fixed && yearlyIncVal){
+        yearlyIncreaseRate = parseInt(yearlyIncVal.toString());
+        if (isNaN(yearlyIncreaseRate) || yearlyIncreaseRate < 0) {
+            return { error: ' Yearly increase rate must be a non-negative number' };
+        }
+        }
+
+
 
     //get logged in user 
 
@@ -81,7 +99,7 @@ async function addLoan(formData: FormData): Promise<LoanResult> {
         return { error: 'Car does not exist'};
     }
 
-    const monthlyPayment = calculateLoan(loanAmount, interestRate, loanTerm, fixed);
+    const monthlyPayment = calculateLoan(loanAmount, interestRate, loanTerm, fixed, yearlyIncreaseRate);
 
 
     const loanData: LoanData = await db.loan.create({

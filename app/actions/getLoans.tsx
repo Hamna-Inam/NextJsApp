@@ -18,7 +18,9 @@ async function getLoans(): Promise<{
             where: { userId },
             orderBy: {
                 createdAt: 'desc'
-            }
+            },include: {
+                car: true, 
+              },
         });
         return {loans};
     }
@@ -32,3 +34,6 @@ async function getLoans(): Promise<{
 }
 
 export default getLoans;
+
+
+

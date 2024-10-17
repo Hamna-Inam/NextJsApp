@@ -42,7 +42,7 @@ import {toast} from 'react-toastify';
               />
             </div>
             <div className ="mb-4">
-              <label htmlFor="interestRate">Interest Rate(like 0.5, 0.3):</label>
+              <label htmlFor="interestRate">Yearly Interest Rate(like 50, 30):</label>
               <input
                 id="interestRate"
                 type="text"
@@ -50,7 +50,7 @@ import {toast} from 'react-toastify';
               />
             </div>
             <div>
-            <label htmlFor="loanTerm">Loan Term (in years):</label>
+            <label htmlFor="loanTerm">Loan Term (in years): 1,2,3,..</label>
             <input
               id="loanTerm"
               type="number"
@@ -65,6 +65,19 @@ import {toast} from 'react-toastify';
                 name="fixed"
               />
             </div>
+          <div className="mb-4">
+            <label htmlFor="yearlyIncreaseRate">
+              Yearly Interest Rate Increase (%) ONLY FOR DYNAMIC INTEREST RATE:
+            </label>
+            <input
+              id="yearlyIncreaseRate"
+              type="number"
+              name="yearlyIncreaseRate"
+              defaultValue="1"
+              min="0"
+              max="100"
+            />
+          </div>
             <button type="submit">Generate Loan</button>
           </form>
         </>
